@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+  <body>
+    <button id="rzp-button">Pay Now</button>
+
+    <script>
+      document.getElementById("rzp-button").onclick = function (e) {
+        var options = {
+          key: "rzp_test_RT2cv0jcxdEeZN", // from Razorpay Dashboard
+          amount: 500, // same as order amount
+          currency: "INR",
+          name: "Test Payment",
+          description: "Razorpay Test Transaction",
+          order_id: "order_RT4TskMEEE7q8j", // order id from API
+          handler: function (response) {
+            console.log("Payment ID:", response.razorpay_payment_id);
+            console.log("Order ID:", response.razorpay_order_id);
+            console.log("Signature:", response.razorpay_signature);
+            alert("Payment Success! Check console for details.");
+          },
+          theme: {
+            color: "#3399cc",
+          },
+        };
+        var rzp = new Razorpay(options);
+        rzp.open();
+        e.preventDefault();
+      };
+    </script>
+  </body>
+</html>

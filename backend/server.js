@@ -10,7 +10,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-  origin: ["http://chiragkhimani.com", "https://chiragkhimani.com"], 
+  origin: [
+    "http://chiragkhimani.com",
+    "https://chiragkhimani.com",
+    "http://www.chiragkhimani.com",
+    "https://www.chiragkhimani.com",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -98,19 +103,30 @@ app.post('/order/validate', async (req, res) => {
   }
 });
 
-app.post("/api/contact", async (req, res) => {
+app.post("/api/contact", handleContact);
+app.post("/contact", handleContact);
+
+async function handleContact(req, res) {
   try {
     const { name, email, message } = req.body;
 
-    // 🔍 Validate input
-    if (!name || !email  || !message) {
+    if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    // ✅ Create transporter using your Gmail credentials
+    const smtpVars = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "TO_EMAIL"];
+    const missing = smtpVars.filter((key) => !process.env[key]);
+    if (missing.length > 0) {
+      console.error("Missing SMTP env vars:", missing.join(", "));
+      return res.status(500).json({
+        success: false,
+        message: "Email service is not configured. Please try again later.",
+      });
+    }
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
+      port: Number(process.env.SMTP_PORT),
       secure: process.env.SMTP_SECURE === "true",
       auth: {
         user: process.env.SMTP_USER,
@@ -118,11 +134,11 @@ app.post("/api/contact", async (req, res) => {
       },
     });
 
-    // ✅ Email content
     const mailOptions = {
       from: `"${name}" <${process.env.SMTP_USER}>`,
       to: process.env.TO_EMAIL,
-      subject: `📩 New Contact from: ${name}`,
+      replyTo: email,
+      subject: `New Contact from: ${name}`,
       html: `
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> ${name}</p>
@@ -134,16 +150,14 @@ app.post("/api/contact", async (req, res) => {
       `,
     };
 
-    // ✅ Send email
     const info = await transporter.sendMail(mailOptions);
 
-    console.log("✅ Email sent:", info.messageId);
+    console.log("Email sent:", info.messageId);
     res.status(200).json({ success: true, message: "Message sent successfully!" });
-
   } catch (error) {
-    console.error("❌ Error sending mail:", error);
+    console.error("Error sending mail:", error);
     res.status(500).json({ success: false, message: "Error sending message", error: error.message });
   }
-});
+}
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

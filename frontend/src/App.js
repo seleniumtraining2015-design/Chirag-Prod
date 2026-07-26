@@ -276,20 +276,20 @@ const handleBackToForm = () => {
       body: JSON.stringify(contactForm),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
-    if (data.success) {
-      alert("✅ Message sent successfully!");
-      setContactForm({ name: "", email: "", message: "" }); // clear form
+    if (response.ok && data.success) {
+      alert("Message sent successfully!");
+      setContactForm({ name: "", email: "", message: "" });
     } else {
-      alert("❌ Failed to send message: " + data.message);
+      alert("Failed to send message: " + (data.message || `Server error (${response.status})`));
     }
   } catch (error) {
     console.error("Error:", error);
-    alert("⚠ Something went wrong. Please try again.");
+    alert("Something went wrong. Please try again.");
   } finally {
     setIsSubmitting(false);
-  }
+  }
 };
 
   const handleInputChange = (form, setForm) => (field) => (value) => {
@@ -467,7 +467,7 @@ const handleBackToForm = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center space-x-3 text-sm">
             <Calendar className="h-4 w-4 text-orange-400" />
-            <span className="text-orange-100 font-medium">Next Batch Starts 04 December 2025</span>
+            <span className="text-orange-100 font-medium">Next Batch Starts 04 November 2026</span>
             <span className="text-orange-300">•</span>
             <span className="text-orange-200 text-xs">Limited Seats Available!</span>
           </div>
